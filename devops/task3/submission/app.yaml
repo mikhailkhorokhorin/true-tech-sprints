@@ -1,0 +1,178 @@
+# Fixed manifest for the Debug task.
+# No namespace set — apply with: kubectl apply -n "$NS" -f app.yaml
+# Ingress host and node name are set to the stand values.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-homework
+binaryData:
+  # Minimal JPEG placeholder
+  course.jpg: /9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oACAEBAAA/AH9G3D//2Q==
+data:
+  homework.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Kubernetes homework</title>
+    <style>
+    html { color-scheme: light; }
+    body { width: 50em; margin: 0 auto; padding-top: 150px;
+    font-family: Tahoma, Verdana, Arial, sans-serif; }
+    </style>
+    </head>
+    <body>
+    <h1 style="text-align:center;">Welcome to the Kubernetes course!</h1>
+    <h2 style="text-align:center;">Job well done!</h2>
+    <center><img src="course.jpg" alt="course logo" width="200" height="200"></center>
+    </body>
+    </html>
+  nginx.conf: |
+    user  nginx;
+    worker_processes  auto;
+    error_log  /var/log/nginx/error.log notice;
+    pid        /var/run/nginx.pid;
+    events {
+        worker_connections  1024;
+    }
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $document_uri $document_root $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+        access_log  /var/log/nginx/access.log  main;
+        sendfile        on;
+        keepalive_timeout  65;
+        include /etc/nginx/conf.d/*.conf;
+    }
+  default.conf: |
+    server {
+      listen       80;
+      listen  [::]:80;
+      server_name  localhost;
+      location / {
+          root   /usr/share/nginx/html;
+          # fixed: serve homework.html
+          index  homework.html index.html index.htm;
+      }
+      error_page   500 502 503 504  /50x.html;
+      location = /50x.html {
+          root   /usr/share/nginx/html;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-homework
+  labels:
+    app: nginx-homework
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-homework
+  template:
+    metadata:
+      labels:
+        app: nginx-homework
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      # fixed: real node
+                      - k8s-wk-1
+      shareProcessNamespace: true
+      containers:
+        - name: nginx
+          # fixed: valid image tag
+          image: nginx:1.25-alpine
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d
+              readOnly: true
+              name: default-conf
+            - mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+              name: nginx-conf
+            - mountPath: /usr/share/nginx/html/homework.html
+              subPath: homework.html
+              name: html
+            - mountPath: /usr/share/nginx/html/course.jpg
+              subPath: course.jpg
+              name: html-jpg
+      volumes:
+        - name: html
+          configMap:
+            name: nginx-homework
+            items:
+              - key: homework.html
+                path: homework.html
+        - name: html-jpg
+          configMap:
+            name: nginx-homework
+            items:
+              - key: course.jpg
+                path: course.jpg
+        - name: default-conf
+          configMap:
+            name: nginx-homework
+            items:
+              - key: default.conf
+                path: default.conf
+        - name: nginx-conf
+          configMap:
+            name: nginx-homework
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-homework
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  # fixed: selector matches pod labels
+  selector:
+    app: nginx-homework
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-homework
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: debug-user-35.stand.sprint-devops.cybertech.ai
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # fixed: existing Service name
+                name: nginx-homework
+                port:
+                  number: 80

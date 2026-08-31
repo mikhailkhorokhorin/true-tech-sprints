@@ -1,0 +1,9 @@
+=== Broken liveness (failed-liveness-probe.yaml, path /healthz -> 404) ===
+NAME                                     READY   STATUS    RESTARTS     AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+failed-liveness-probe-6cf7f67874-jv72d   1/1     Running   3 (7s ago)   52s   10.244.3.92   k8s-wk-4   <none>           <none>
+-> RESTARTS grows: kubelet kills and restarts the container on failed liveness.
+
+=== Broken readiness (failed-readiness-probe.yaml, path /healthz -> 404) ===
+NAME                                      READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+failed-readiness-probe-677d4796f8-4qrj2   0/1     Running   0          53s   10.244.3.83   k8s-wk-4   <none>           <none>
+-> READY = 0/1: pod Running but NOT Ready, excluded from Service endpoints (no traffic).

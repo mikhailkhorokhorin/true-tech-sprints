@@ -1,0 +1,21 @@
+===== curl of a successful response (port-forward svc/nginx-homework 80, bypassing Ingress) =====
+$ curl http://127.0.0.1:8080/
+<!DOCTYPE html>
+<html>
+<head>
+<title>Kubernetes homework</title>
+<style>
+html { color-scheme: light; }
+body { width: 50em; margin: 0 auto; padding-top: 150px;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1 style="text-align:center;">Welcome to the Kubernetes course!</h1>
+<h2 style="text-align:center;">Job well done!</h2>
+<center><img src="course.jpg" alt="course logo" width="200" height="200"></center>
+</body>
+</html>
+
+$ curl -I http://127.0.0.1:8080/course.jpg
+HTTP 200, content-type=image/jpeg, size=334 bytes

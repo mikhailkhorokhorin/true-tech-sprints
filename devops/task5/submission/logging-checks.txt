@@ -1,0 +1,34 @@
+############ TASK 05 — LOGGING (namespace user-35) ############
+
+===== 1. log-demo-app: nginx access logs via kubectl logs =====
+$ kubectl logs log-demo-app-6477bb496d-wrqhx --tail=6
+2026/08/30 07:01:58 [error] 30#30: *48 open() "/usr/share/nginx/html/health-18" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /health-18 HTTP/1.1", host: "127.0.0.1:80"
+127.0.0.1 - - [30/Aug/2026:07:01:58 +0000] "GET /health-18 HTTP/1.1" 404 153 "-" "Wget" "-"
+2026/08/30 07:01:59 [error] 31#31: *49 open() "/usr/share/nginx/html/health-19" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /health-19 HTTP/1.1", host: "127.0.0.1:80"
+127.0.0.1 - - [30/Aug/2026:07:01:59 +0000] "GET /health-19 HTTP/1.1" 404 153 "-" "Wget" "-"
+2026/08/30 07:02:01 [error] 31#31: *50 open() "/usr/share/nginx/html/health-20" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /health-20 HTTP/1.1", host: "127.0.0.1:80"
+127.0.0.1 - - [30/Aug/2026:07:02:01 +0000] "GET /health-20 HTTP/1.1" 404 153 "-" "Wget" "-"
+
+===== 2. SIDECAR: app vs log-reader difference =====
+$ kubectl logs sidecar-log-demo-7b76c478b6-j75wx -c app --tail=5   (app writes to /var/log/app.log → stdout EMPTY)
+(empty — the main container writes to a file, not stdout)
+
+$ kubectl logs sidecar-log-demo-7b76c478b6-j75wx -c log-reader --tail=5   (sidecar tail -F of the file → stdout)
+2026-08-30T07:02:24+00:00 INFO sidecar-demo: tick
+2026-08-30T07:02:29+00:00 INFO sidecar-demo: tick
+2026-08-30T07:02:34+00:00 INFO sidecar-demo: tick
+2026-08-30T07:02:39+00:00 INFO sidecar-demo: tick
+2026-08-30T07:02:44+00:00 INFO sidecar-demo: tick
+
+===== 3. Variant B: Fluent Bit (DaemonSet, stdout output) — parsed lines =====
+$ kubectl logs pod/fluent-bit-m6ztq | grep method   (custom nginx_custom parser extracted the fields)
+{"date":1788073278.168988,"remote":"127.0.0.1","user":"-","method":"GET","url":"/health-1","protocol":"HTTP/1.1","status":"404","size":"153","time":"2026-08-30T10:01:18.168987846+03:00","stream":"stdout","_p":"F","log":"127.0.0.1 - - [30/Aug/2026:07:01:18 +0000] \"GET /health-1 HTTP/1.1\" 404 153 \"-\" \"Wget\" \"-\""}
+{"date":1788073278.454456,"remote":"10.244.2.159","user":"-","method":"GET","url":"/","protocol":"HTTP/1.1","status":"200","size":"615","time":"2026-08-30T10:01:18.45445581+03:00","stream":"stdout","_p":"F","log":"10.244.2.159 - - [30/Aug/2026:07:01:18 +0000] \"GET / HTTP/1.1\" 200 615 \"-\" \"kube-probe/1.31\" \"-\""}
+{"date":1788073278.454517,"remote":"10.244.2.159","user":"-","method":"GET","url":"/","protocol":"HTTP/1.1","status":"200","size":"615","time":"2026-08-30T10:01:18.45451677+03:00","stream":"stdout","_p":"F","log":"10.244.2.159 - - [30/Aug/2026:07:01:18 +0000] \"GET / HTTP/1.1\" 200 615 \"-\" \"kube-probe/1.31\" \"-\""}
+
+===== pods =====
+NAME                                READY   STATUS    RESTARTS   AGE
+log-demo-app-6477bb496d-wrqhx       1/1     Running   0          4m31s
+sidecar-log-demo-7b76c478b6-j75wx   2/2     Running   0          4m30s
+NAME               READY   STATUS    RESTARTS   AGE
+fluent-bit-58lrw   1/1     Running   0          93s

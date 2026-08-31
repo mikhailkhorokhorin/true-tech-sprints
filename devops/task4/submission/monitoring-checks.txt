@@ -1,0 +1,42 @@
+===== TASK 04 — VERIFICATION (namespace user-35) =====
+
+=== VM resources ===
+NAME                                                  STATUS        AGE
+vmsingle.operator.victoriametrics.com/vmsingle-demo   operational   5m35s
+
+NAME                                              SHARDS COUNT   REPLICA COUNT   STATUS        AGE
+vmagent.operator.victoriametrics.com/agent-demo   1                              operational   5m35s
+
+NAME                                                                  AGE     STATUS        SYNC ERROR
+vmservicescrape.operator.victoriametrics.com/metrics-app              5m35s   operational   
+vmservicescrape.operator.victoriametrics.com/vmagent-agent-demo       5m35s   operational   
+vmservicescrape.operator.victoriametrics.com/vmsingle-vmsingle-demo   5m35s   operational   
+
+=== pods ===
+NAME                                      READY   STATUS    RESTARTS   AGE
+vmsingle-vmsingle-demo-785ff75cfb-stc4t   1/1     Running   0          5m36s
+metrics-app-5f9c997684-fh6pk              1/1     Running   0          5m37s
+vmagent-agent-demo-86d9c45b5c-26sk2       2/2     Running   0          5m36s
+
+=== targets up (VMSingle /api/v1/query up) ===
+  metrics-app = 1
+  vmagent-agent-demo = 1
+  vmagent-agent-demo-reloader-http = 1
+  vmsingle-vmsingle-demo = 1
+
+=== application metrics in VMSingle ===
+  sum(http_requests_total) = 208
+  rate(http_requests_total[1m]) = Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "W:\Python\3.12\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "W:\Python\3.12\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "W:\Python\3.12\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "W:\Python\3.12\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)

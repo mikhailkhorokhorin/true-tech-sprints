@@ -1,0 +1,47 @@
+stages:
+  - test
+  - deploy
+  - cleanup
+
+variables:
+  HELM_RELEASE: "demo-app"
+
+.helm:
+  image:
+    name: alpine/helm:3.16.3
+    entrypoint: [""]
+  tags:
+    - student
+    - kubernetes
+
+lint:
+  extends: .helm
+  stage: test
+  script:
+    - helm lint ./chart
+
+deploy:
+  extends: .helm
+  stage: deploy
+  environment:
+    name: lab
+    deployment_tier: development
+  script:
+    - helm upgrade --install "$HELM_RELEASE" ./chart
+      --namespace "$K8S_NAMESPACE"
+      --atomic
+      --timeout 300s
+    - helm status "$HELM_RELEASE" -n "$K8S_NAMESPACE"
+    - helm list -n "$K8S_NAMESPACE"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+undeploy:
+  extends: .helm
+  stage: cleanup
+  environment:
+    name: lab
+    action: stop
+  script:
+    - helm uninstall "$HELM_RELEASE" -n "$K8S_NAMESPACE" --wait || true
+  when: manual

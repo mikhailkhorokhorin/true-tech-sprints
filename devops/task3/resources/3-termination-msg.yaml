@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-termination-msg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-termination-msg
+  template:
+    metadata:
+      labels:
+        app: app-termination-msg
+    spec:
+      containers:
+        - name: app
+          image: alpine:3.21
+          command:
+            - sh
+            - -c
+            - |
+              echo 'Starting app...'
+              for i in $(seq 1 100); do echo 'Working - OK'; sleep 0.2; done
+              echo 'Broken. Exiting...'
+              exit 1
+          resources:
+            requests:
+              memory: 32Mi
+              cpu: 50m
+            limits:
+              memory: 100Mi
+              cpu: 100m
+          terminationMessagePolicy: FallbackToLogsOnError

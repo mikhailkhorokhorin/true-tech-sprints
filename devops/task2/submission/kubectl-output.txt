@@ -1,0 +1,19 @@
+$ kubectl get deploy,hpa,pdb,pods -o wide  (namespace user-35, app=ha-demo)
+
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS                IMAGES                                                        SELECTOR
+deployment.apps/demo-app                  1/1     1            1           25m   app                       nginx:1.25-alpine                                             app=demo-app
+deployment.apps/failed-liveness-probe     1/1     1            1           51s   app                       nginx:1.25-alpine                                             app=failed-liveness-probe
+deployment.apps/failed-readiness-probe    0/1     1            0           51s   app                       nginx:1.25-alpine                                             app=failed-readiness-probe
+deployment.apps/ha-demo                   3/3     3            3           94s   nginx                     nginx:1.25-alpine                                             app=ha-demo
+deployment.apps/my-runner-gitlab-runner   1/1     1            1           26m   my-runner-gitlab-runner   registry.gitlab.com/gitlab-org/gitlab-runner:alpine-v19.3.1   app=my-runner-gitlab-runner
+
+NAME                                          REFERENCE            TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/ha-demo   Deployment/ha-demo   cpu: 2%/60%   2         6         3          93s
+
+NAME                                 MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+poddisruptionbudget.policy/ha-demo   2               N/A               1                     93s
+
+NAME                       READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+ha-demo-55845c5f68-g8858   1/1     Running   0          95s   10.244.1.54    k8s-wk-1   <none>           <none>
+ha-demo-55845c5f68-kqw62   1/1     Running   0          95s   10.244.2.232   k8s-wk-3   <none>           <none>
+ha-demo-55845c5f68-pcl6d   1/1     Running   0          95s   10.244.4.183   k8s-wk-2   <none>           <none>

@@ -1,0 +1,51 @@
+# Example to copy into the root of the GitLab project.
+# Tags must match the runner tags.
+
+stages:
+  - test
+  - deploy
+  - cleanup
+
+variables:
+  HELM_NAMESPACE: "REPLACE_WITH_NAMESPACE"
+  HELM_RELEASE: "demo-app"
+
+.default-helm:
+  image:
+    name: alpine/helm:3.16.3
+    entrypoint: [""]
+  tags:
+    - student
+    - kubernetes
+
+lint:
+  extends: .default-helm
+  stage: test
+  script:
+    - helm lint ./chart
+
+deploy:
+  extends: .default-helm
+  stage: deploy
+  environment:
+    name: lab
+    deployment_tier: development
+  script:
+    - helm upgrade --install "${HELM_RELEASE}" ./chart
+        --namespace "${HELM_NAMESPACE}"
+        --create-namespace
+        --atomic
+        --timeout 300s
+    - helm status "${HELM_RELEASE}" -n "${HELM_NAMESPACE}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+undeploy:
+  extends: .default-helm
+  stage: cleanup
+  environment:
+    name: lab
+    action: stop
+  script:
+    - helm uninstall "${HELM_RELEASE}" -n "${HELM_NAMESPACE}" --wait || true
+  when: manual

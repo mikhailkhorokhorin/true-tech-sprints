@@ -1,0 +1,37 @@
+gitlabUrl: "GITLAB_URL_PLACEHOLDER"
+runnerToken: "RUNNER_TOKEN_PLACEHOLDER"
+
+unregisterRunners: true
+logLevel: info
+concurrent: 4
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+  clusterWideAccess: false
+  rules:
+    - apiGroups: ["", "apps", "networking.k8s.io", "batch", "autoscaling", "policy"]
+      resources: ["*"]
+      verbs: ["*"]
+
+runners:
+  name: "student-k8s-runner"
+  tags: "student,kubernetes"
+  runUntagged: false
+  config: |
+    [[runners]]
+      executor = "kubernetes"
+      [runners.kubernetes]
+        namespace = "NAMESPACE_PLACEHOLDER"
+        image = "alpine:3.20"
+        privileged = false
+        pull_policy = ["if-not-present", "always"]
+        cpu_request = "100m"
+        memory_request = "128Mi"
+        cpu_limit = "500m"
+        memory_limit = "256Mi"
+        service_account = "default"
+        helper_cpu_request = "50m"
+        helper_memory_request = "64Mi"

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-logs-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-logs-demo
+  template:
+    metadata:
+      labels:
+        app: nginx-logs-demo
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi

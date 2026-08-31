@@ -1,0 +1,65 @@
+config:
+  service: |
+    [SERVICE]
+        Daemon Off
+        Flush 1
+        Log_Level info
+        Parsers_File /fluent-bit/etc/parsers.conf
+        Parsers_File /fluent-bit/etc/conf/custom_parsers.conf
+        HTTP_Server On
+        HTTP_Listen 0.0.0.0
+        HTTP_Port 2020
+        Health_Check On
+
+  inputs: |
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*log-demo-app*.log
+        multiline.parser cri
+        Tag kube.tail.*
+        Mem_Buf_Limit 50MB
+        Skip_Long_Lines On
+        Refresh_Interval 30
+
+  filters: |
+    [FILTER]
+        Name kubernetes
+        Match kube.tail.*
+        Kube_Tag_Prefix kube.tail.var.log.containers.
+        Merge_Log On
+        Merge_Log_Key log_json
+        Keep_Log Off
+        K8S-Logging.Parser Off
+        K8S-Logging.Exclude On
+        Labels On
+        Annotations On
+
+    [FILTER]
+        Name rewrite_tag
+        Match kube.tail.var.log.containers.*
+        Rule $kubernetes['annotations']['log-parser'] ^(.+)$ kube.custom.parser.$1 false
+
+    [FILTER]
+        Name parser
+        Match kube.custom.parser.nginx_custom
+        Parser nginx_custom
+        Key_Name log
+        Preserve_Key True
+        Reserve_Data True
+
+  outputs: |
+    [OUTPUT]
+        Name stdout
+        Match *
+        Format json_lines
+
+  customParsers: |
+    [PARSER]
+        Name nginx_custom
+        Format regex
+        Regex ^(?<remote>[^ ]*) - (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>[A-Z]+) (?<url>[^ ]*) (?<protocol>[^\"]*)" (?<status>[0-9]{3}) (?<size>[0-9]+) "(?<referer>[^\"]*)" "(?<agent>[^\"]*)" "(?<upstream>[^\"]*)"
+        Time_Key time
+        Time_Format %d/%b/%Y:%H:%M:%S %z
+
+tolerations: []
+nodeSelector: {}

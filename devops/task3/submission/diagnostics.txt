@@ -1,0 +1,30 @@
+############ TASK 03 — DIAGNOSTICS AND VERIFICATION (namespace user-35) ############
+
+===== 1. Pending symptom (broken nodeAffinity: wrong-node-name) =====
+$ kubectl describe pod ... | grep FailedScheduling
+  Warning  FailedScheduling  23s   default-scheduler  0/5 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }, 4 node(s) didn't match Pod's node affinity/selector. preemption: 0/5 nodes are available: 5 Preemption is not helpful for scheduling.
+
+===== 2. After the fix: pod Running/Ready =====
+$ kubectl get pods -l app=nginx-homework -o wide
+NAME                              READY   STATUS    RESTARTS   AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+nginx-homework-77b9cd44fc-t5kxp   1/1     Running   0          2m35s   10.244.1.227   k8s-wk-1   <none>           <none>
+
+===== 3. kubectl exec: files in /usr/share/nginx/html =====
+$ kubectl exec $POD -- ls -la /usr/share/nginx/html/
+total 28
+drwxr-xr-x    1 root     root          4096 Aug 30 06:40 .
+drwxr-xr-x    1 root     root          4096 May  6  2024 ..
+-rw-r--r--    1 root     root           497 Apr 16  2024 50x.html
+-rw-r--r--    1 root     root           334 Aug 30 06:40 course.jpg
+-rw-r--r--    1 root     root           454 Aug 30 06:40 homework.html
+-rw-r--r--    1 root     root           615 Apr 16  2024 index.html
+
+===== 4. Service endpoints (selector fixed) =====
+$ kubectl get endpoints nginx-homework
+NAME             ENDPOINTS         AGE
+nginx-homework   10.244.1.227:80   2m59s
+
+===== 5. Ingress (backend service fixed) =====
+$ kubectl get ingress nginx-homework
+NAME             CLASS   HOSTS                                            ADDRESS     PORTS   AGE
+nginx-homework   nginx   debug-user-35.stand.sprint-devops.cybertech.ai   10.10.2.0   80      3m

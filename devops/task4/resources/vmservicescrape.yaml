@@ -1,0 +1,12 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: metrics-app
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: metrics-app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

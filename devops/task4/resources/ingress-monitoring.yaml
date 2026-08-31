@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vm-monitoring
+spec:
+  # Set your cluster's Ingress class (nginx / nginx-ingress / ...)
+  ingressClassName: nginx
+  rules:
+    - host: monitoring.replace-me.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vmagent-agent-demo
+                port:
+                  number: 8429
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: vmsingle-vmsingle-demo
+                port:
+                  number: 8429

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: failed-startup-probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: failed-startup-probe
+  template:
+    metadata:
+      labels:
+        app: failed-startup-probe
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          startupProbe:
+            httpGet:
+              path: /nonexistent
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 2
+            failureThreshold: 3

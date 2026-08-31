@@ -1,0 +1,34 @@
+# Copy to values-runner.yaml and fill in your values.
+# Token: GitLab → Settings → CI/CD → Runners → registration token
+
+gitlabUrl: https://gitlab.example.com
+runnerRegistrationToken: "REPLACE_WITH_REGISTRATION_TOKEN"
+
+unregisterRunners: true
+logLevel: info
+logFormat: json
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+  clusterWideAccess: false
+  rules:
+    - apiGroups: ["", "apps", "networking.k8s.io", "batch", "autoscaling"]
+      resources: ["*"]
+      verbs: ["*"]
+
+runners:
+  name: "student-k8s-runner"
+  # Jobs only in your namespace:
+  jobNamespace: "REPLACE_WITH_NAMESPACE"
+  tags: "student,kubernetes"
+  config: |
+    [[runners]]
+      executor = "kubernetes"
+      [runners.kubernetes]
+        namespace = "REPLACE_WITH_NAMESPACE"
+        image = "alpine:3.20"
+        privileged = false
+        pull_policy = ["if-not-present", "always"]

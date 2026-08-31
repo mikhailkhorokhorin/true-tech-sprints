@@ -1,0 +1,20 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAgent
+metadata:
+  name: agent-demo
+spec:
+  scrapeInterval: 15s
+  # selectAllByDefault=false + selectors without a namespaceSelector =
+  # only VMServiceScrape/VMPodScrape from the agent namespace (not the whole cluster, no OOM).
+  selectAllByDefault: false
+  serviceScrapeSelector: {}
+  podScrapeSelector: {}
+  remoteWrite:
+    - url: http://vmsingle-vmsingle-demo:8429/api/v1/write
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 300m
+    requests:
+      memory: 128Mi
+      cpu: 100m

@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-debug
+  labels:
+    app: nginx-debug
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-debug
+  template:
+    metadata:
+      labels:
+        app: nginx-debug
+    spec:
+      shareProcessNamespace: true
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-debug
+spec:
+  selector:
+    app: nginx-debug
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  type: ClusterIP
